@@ -1,0 +1,10 @@
+const assert=require('node:assert/strict'),{ROVRules:R}=require('../dist/engine.js');
+const g=new R.Game(31);g.start();g.elapsed=40;
+const shell=(species,x,bornAt,alive=true)=>({x:g.pos.x+x,y:g.pos.y,z:g.pos.z,species,bornAt,alive});
+g.world.mussels=[shell('quagga',0,30),shell('zebra',1,35),shell('zebra',2,39),shell('quagga',0,4),shell('quagga',0,undefined),shell('zebra',0,39,false),shell('quagga',4.6,39)];
+const sample=g.use('edna');
+assert.equal(sample.babyCount,3);assert.equal(sample.babyQuaggas,1);assert.equal(sample.babyZebras,2);
+assert.equal(g.sampleRecords[0].babyCount,3);assert.equal(g.events.find(e=>e.type==='scan').babyCount,3);
+g.elapsed=80;const later=g.use('edna');assert.equal(later.babyCount,0,'Mature mussels are no longer counted as babies');assert.equal(g.sampleRecords[0].babyCount,3,'Old sample results stay unchanged');
+g.loadLevel(2);assert.equal(g.sampleRecords.length,0);
+console.log('PASS: eDNA reports local live juveniles by species, excludes adults/dead/distant mussels, preserves sample history, and resets each level.');
