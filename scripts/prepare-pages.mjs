@@ -1,0 +1,10 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import vm from 'node:vm';
+const context={window:{}};vm.runInNewContext(await fs.readFile('dist/radio-clips.js','utf8'),context);
+const audio=new Set(context.window.LAKE_RADIO_CLIPS.map(c=>c.src));
+await fs.mkdir('_site',{recursive:true});
+await fs.cp('dist','_site',{recursive:true,filter:source=>{const relative=path.relative('dist',source).split(path.sep).join('/');return !relative.startsWith('audio/')||audio.has(relative)}});
+await fs.writeFile('_site/.nojekyll','');
+for(const file of audio)await fs.access(path.join('_site',file));
+console.log('Prepared GitHub Pages site with '+audio.size+' current narration clips.');
