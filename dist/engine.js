@@ -41,8 +41,9 @@ function makeWorld(level,seed){
  for(let i=0;i<settings.zebraCount;i++){const bed=rockBeds[i%rockBeds.length];let x,z,tries=0;do{const a=rand()*6.28,r=Math.sqrt(rand())*bed.radius*.87;x=bed.x+Math.cos(a)*r;z=bed.z+Math.sin(a)*r;tries++}while(tries<60&&(rockBedLift(bed,x,z)<=.015||rocks.some(k=>Math.hypot(x-k.x,z-k.z)<k.r+.3)||mussels.some(m=>Math.hypot(x-m.x,z-m.z)<.22)));mussels.push({id:mussels.length,x,y:floor(x,z)+.13,z,hp:100,maxHp:100,alive:true,species:'zebra',rockBedId:bed.id,identifyProgress:0,identified:false,angle:rand()*6.28,scale:.85+rand()*.3,clusterId:null,stray:false})}
  const corals=[];for(let i=0;i<18;i++){const a=rand()*6.28,r=(.25+rand()*.46)*half,x=Math.cos(a)*r,z=Math.sin(a)*r;if(Math.hypot(x-spawn.x,z-spawn.z)<4||rocks.some(k=>Math.hypot(x-k.x,z-k.z)<k.r+1.5)||clusters.some(c=>Math.hypot(x-c.x,z-c.z)<3.1))continue;corals.push({id:'coral-'+i,x,y:floor(x,z),z,r:.7+rand()*.3,height:1.2+rand()*.9})}
  const chargeStation={id:0,x:spawn.x,y:-1.2,z:spawn.z,radius:3},chargeStations=[chargeStation];
- // Spread extra stations over the lake, with one more charger on each level.
- for(let i=0;i<level;i++){const a=frontAngle+Math.PI+i*Math.PI*(3-Math.sqrt(5)),r=half*.76*Math.sqrt((i+.5)/level);chargeStations.push({id:i+1,x:Math.sin(a)*r,y:-1.2,z:Math.cos(a)*r,radius:3})}
+ // Add a station every five levels, keeping early lakes uncluttered.
+ const extraChargers=Math.floor((level-1)/5);
+ for(let i=0;i<extraChargers;i++){const a=frontAngle+Math.PI+i*Math.PI*(3-Math.sqrt(5)),r=half*.76*Math.sqrt((i+.5)/extraChargers);chargeStations.push({id:i+1,x:Math.sin(a)*r,y:-1.2,z:Math.cos(a)*r,radius:3})}
  const waterCells=[],cellStep=Math.max(1.5,half/22),cellHeight=1.5;
  for(let x=-half+cellStep/2;x<half;x+=cellStep)for(let z=-half+cellStep/2;z<half;z+=cellStep){if(Math.hypot(x,z)>=half)continue;const bottom=floor(x,z);for(let y=-cellHeight/2;y>bottom;y-=cellHeight)waterCells.push({x,y,z})}
  const cellVolume=cellStep*cellStep*cellHeight;

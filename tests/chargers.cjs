@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict'),{ROVRules:R}=require('../dist/engine.js');
-for(const level of [1,2,5,10,25]){
+for(const level of [1,5,6,10,11,25]){
  const g=new R.Game(31);g.loadLevel(level);g.start();
- assert.equal(g.world.chargeStations.length,level+1);
+ assert.equal(g.world.chargeStations.length,1+Math.floor((level-1)/5));
  assert.equal(g.world.chargeStations[0],g.world.chargeStation);
  for(const station of g.world.chargeStations){
   assert(Math.hypot(station.x,station.z)<g.world.half);
