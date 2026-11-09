@@ -16,6 +16,18 @@ function levelSettings(level){return{half:20+level*5,count:Math.min(1500,240+(le
 function rockBedLift(bed,x,z){const dx=x-bed.x,dz=z-bed.z,a=Math.atan2(dz,dx),boundary=1+.07*Math.sin(3*a+bed.phase)+.035*Math.cos(5*a-bed.phase),q=Math.hypot(dx,dz)/(bed.radius*boundary);return q>=1?0:bed.height*(1-q*q)**2+.025*Math.sin(x*5+bed.phase)*Math.cos(z*4)*(1-q)**2}
 function visibleSegment(world,eye,target){for(let i=1;i<8;i++){const f=i/8,x=eye.x+(target.x-eye.x)*f,y=eye.y+(target.y-eye.y)*f,z=eye.z+(target.z-eye.z)*f;if(y<world.floor(x,z)+.025)return false}for(const r of world.rocks){const rx=r.r+.03,ry=r.r*.75+.03,ox=(eye.x-r.x)/rx,oy=(eye.y-r.y)/ry,oz=(eye.z-r.z)/rx,dx=(target.x-eye.x)/rx,dy=(target.y-eye.y)/ry,dz=(target.z-eye.z)/rx,A=dx*dx+dy*dy+dz*dz,B=2*(ox*dx+oy*dy+oz*dz),C=ox*ox+oy*oy+oz*oz-1,D=B*B-4*A*C;if(D>0&&A>0){const t=(-B-Math.sqrt(D))/(2*A);if(t>.001&&t<.98)return false}}return true}
 function frontierDistance(front,p){return front.nx*p.x+front.nz*p.z-front.offset}
+// Keep a connected surface route with a generous battery reserve, even when boosting.
+const MAX_CHARGER_LEG=80;
+function connectChargers(stations){
+ const connected=[stations[0]],pending=stations.slice(1);
+ while(pending.length){let best=Infinity,from,to,index=0;
+  for(let i=0;i<pending.length;i++)for(const c of connected){const d=distance(c,pending[i]);if(d<best){best=d;from=c;to=pending[i];index=i}}
+  const legs=Math.ceil(best/MAX_CHARGER_LEG);
+  for(let j=1;j<legs;j++){const t=j/legs,relay={id:stations.length,x:from.x+(to.x-from.x)*t,y:-1.2,z:from.z+(to.z-from.z)*t,radius:3};stations.push(relay);connected.push(relay)}
+  connected.push(to);pending.splice(index,1);
+ }
+ return stations;
+}
 function makeWorld(level,seed){
  const rand=rng(seed),settings=levelSettings(level),half=settings.half,phase=rand()*6.28;
  // A continuous shallow bowl: the slope begins at the center rather than at a steep rim.
@@ -44,6 +56,7 @@ function makeWorld(level,seed){
  // Add a station every five levels, keeping early lakes uncluttered.
  const extraChargers=Math.floor((level-1)/5);
  for(let i=0;i<extraChargers;i++){const a=frontAngle+Math.PI+i*Math.PI*(3-Math.sqrt(5)),r=half*.76*Math.sqrt((i+.5)/extraChargers);chargeStations.push({id:i+1,x:Math.sin(a)*r,y:-1.2,z:Math.cos(a)*r,radius:3})}
+ connectChargers(chargeStations);
  const waterCells=[],cellStep=Math.max(1.5,half/22),cellHeight=1.5;
  for(let x=-half+cellStep/2;x<half;x+=cellStep)for(let z=-half+cellStep/2;z<half;z+=cellStep){if(Math.hypot(x,z)>=half)continue;const bottom=floor(x,z);for(let y=-cellHeight/2;y>bottom;y-=cellHeight)waterCells.push({x,y,z})}
  const cellVolume=cellStep*cellStep*cellHeight;
@@ -146,5 +159,5 @@ class Game{
  get ecosystem(){return this.ecosystemStatus().health}
  score(){return Math.round(this.cleared*QUAGGA_POINTS+this.sampleScore+(this.state==='cleared'?this.budget*.4+this.time*2:0)-this.wildlifePenalty)}
 }
-root.ROVRules={PITCH_LIMIT,BATTERY_RECHARGE_RATE,ROV_LENGTH,ROV_RADIUS,ROV_HALF_SEGMENT,rovSamples,BATTERY_COST,IDENTIFY_SECONDS,QUAGGA_POINTS,frontierDistance,rockBedLift,visibleSegment,TOOLS,WILDLIFE_PENALTY,levelSettings,toolDamage,clamp,distance,rng,makeWorld,Game};
+root.ROVRules={MAX_CHARGER_LEG,connectChargers,PITCH_LIMIT,BATTERY_RECHARGE_RATE,ROV_LENGTH,ROV_RADIUS,ROV_HALF_SEGMENT,rovSamples,BATTERY_COST,IDENTIFY_SECONDS,QUAGGA_POINTS,frontierDistance,rockBedLift,visibleSegment,TOOLS,WILDLIFE_PENALTY,levelSettings,toolDamage,clamp,distance,rng,makeWorld,Game};
 })(typeof module==='object'?module.exports:window);
